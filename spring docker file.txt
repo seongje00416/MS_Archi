@@ -1,0 +1,28 @@
+FROM maven:3.8.6-openjdk-17-slim AS build
+WORKDIR /app
+
+# 의존성 캐싱을 위한 pom.xml 복사
+COPY pom.xml .
+RUN mvn dependency:go-offline -B
+
+# 소스 복사 및 빌드
+COPY src ./src
+RUN mvn package -DskipTests
+
+# 런타임 이미지
+FROM openjdk:17-slim
+WORKDIR /app
+
+# 빌드 스테이지에서 JAR 파일 복사
+COPY --from=build /app/target/*.jar app.jar
+
+# 환경 변수 설정
+ENV JAVA_OPTS=""
+ENV REDIS_HOST="redis"
+ENV REDIS_PORT=6379
+
+# 포트 노출
+EXPOSE 8080
+
+# 애플리케이션 실행
+ENTRYPOINT ["sh", "-c", "java $JAVA_OPTS -jar app.jar"]

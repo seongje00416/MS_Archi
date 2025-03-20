@@ -1,0 +1,37 @@
+FROM node:18-alpine AS builder
+
+WORKDIR /app
+
+# 의존성 파일 복사
+COPY package*.json ./
+
+# 의존성 설치
+RUN npm ci
+
+# 소스 코드 복사
+COPY . .
+
+# 애플리케이션 빌드
+RUN npm run build
+
+# 프로덕션 이미지
+FROM node:18-alpine
+
+WORKDIR /app
+
+# 빌더 스테이지에서 필요한 파일만 복사
+COPY --from=builder /app/package*.json ./
+COPY --from=builder /app/dist ./dist
+COPY --from=builder /app/node_modules ./node_modules
+
+# 환경 변수 설정
+ENV NODE_ENV=production
+ENV PORT=8081
+ENV REDIS_HOST=redis
+ENV REDIS_PORT=6379
+
+# 포트 노출
+EXPOSE 8081
+
+# 애플리케이션 실행
+CMD ["node", "dist/main"]
