@@ -15,13 +15,16 @@ public class KafkaTopicConfig {
     @Value("${spring.kafka.producer.bootstrap-servers}")
     private String bootstrapServers;
 
+    @Value("${spring.kafka.producer.bootstrap-port}")
+    private String bootstrapPort;
+
     @Value("${kafka.topic.name}")
     private String topicName;
 
     @Bean
     public KafkaAdmin kafkaAdmin() {
         Map<String, Object> configs = new HashMap<>();
-        configs.put(AdminClientConfig.BOOTSTRAP_SERVERS_CONFIG, bootstrapServers);
+        configs.put(AdminClientConfig.BOOTSTRAP_SERVERS_CONFIG, bootstrapServers + bootstrapPort);
         return new KafkaAdmin(configs);
     }
 
