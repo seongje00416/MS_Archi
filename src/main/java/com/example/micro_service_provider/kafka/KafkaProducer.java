@@ -21,9 +21,9 @@ public class KafkaProducer {
     @Value("${kafka.topic.name}")
     private String topicName;
 
-    private final KafkaTemplate<String, Order> kafkaTemplate;
+    private final KafkaTemplate<String, OrderEvent> kafkaTemplate;
 
-    public KafkaProducer(KafkaTemplate<String, Order> kafkaTemplate) {
+    public KafkaProducer(KafkaTemplate<String, OrderEvent> kafkaTemplate) {
         this.kafkaTemplate = kafkaTemplate;
     }
 
