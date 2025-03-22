@@ -2,6 +2,7 @@ import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
 import { Logger } from '@nestjs/common';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
+import { Transport } from '@nestjs/microservices';
 
 async function bootstrap() {
   const logger = new Logger('Bootstrap');
@@ -9,6 +10,20 @@ async function bootstrap() {
 
   const port = process.env.PORT || 8081;
   logger.log(`Service B is running on port ${port}`);
+
+  // RabbitMQ 설정
+  app.connectMicroservice({
+    transport: Transport.RMQ,
+    options: {
+      urls: [
+        `amqp://${process.env.RABBITMQ_USERNAME}:${process.env.RABBITMQ_PASSWORD}@${process.env.RABBITMQ_HOST}:${process.env.RABBITMQ_PORT}`,
+      ],
+      queue: 'messages_queue',
+      queueOptions: {
+        durable: false,
+      },
+    },
+  });
 
   // Swagger 설정
   const config = new DocumentBuilder()
@@ -22,6 +37,7 @@ async function bootstrap() {
   // CORS 설정
   app.enableCors();
 
+  await app.startAllMicroservices();
   await app.listen(port);
 }
 bootstrap();
