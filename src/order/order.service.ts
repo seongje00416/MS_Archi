@@ -1,16 +1,20 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { RedisService } from '../redis/redis.service';
 import { Order } from './order.entity';
+import { RabbitmqService } from '../rabbitmq/rabbitmq.service';
+import { KafkaService } from '../kafka/kafka.service';
 
 @Injectable()
 export class OrdersService {
   private readonly logger = new Logger(OrdersService.name);
 
-  constructor(private readonly redisService: RedisService) {}
+  //constructor(private readonly brokerService: RabbitmqService) {}
+  //constructor(private readonly brokerService: KafkaService) {}
+  constructor(private readonly brokerService: RedisService) {}
 
   async getOrder(orderId: string): Promise<Order | null> {
     try {
-      return await this.redisService.getOrder(orderId);
+      return await this.brokerService.getOrder(orderId);
     } catch (error) {
       this.logger.error(`Error getting order: ${error.message}`, error.stack);
       throw error;
@@ -28,7 +32,7 @@ export class OrdersService {
       order.status = 'PROCESSING';
 
       // 업데이트된 주문 정보를 Redis에 저장
-      await this.redisService.setOrder(order);
+      await this.brokerService.setOrder(order);
 
       this.logger.log(`Order ${order.orderId} processed successfully`);
     } catch (error) {

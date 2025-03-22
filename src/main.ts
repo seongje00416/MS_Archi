@@ -2,50 +2,13 @@ import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
 import { Logger } from '@nestjs/common';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
-import { MicroserviceOptions, Transport } from '@nestjs/microservices';
 
 async function bootstrap() {
   const logger = new Logger('Bootstrap');
   const app = await NestFactory.create(AppModule);
 
-  // Kafka Constants
-  const kafkaBroker = process.env.KAFKA_BROKER || 'localhost:9092';
-  const kafkaClientId = process.env.KAFKA_CLIENT_ID || 'nestjs-consumer';
-  const kafkaGroupId = process.env.KAFKA_GROUP_ID || 'nestjs-consumer-group';
-
   const port = process.env.PORT || 8081;
   logger.log(`Service B is running on port ${port}`);
-
-  // RabbitMQ 설정
-  /*
-  app.connectMicroservice({
-    transport: Transport.RMQ,
-    options: {
-      urls: [
-        `amqp://${process.env.RABBITMQ_USERNAME}:${process.env.RABBITMQ_PASSWORD}@${process.env.RABBITMQ_HOST}:${process.env.RABBITMQ_PORT}`,
-      ],
-      queue: 'messages_queue',
-      queueOptions: {
-        durable: false,
-      },
-    },
-  });
-  */
-
-  // Kafka 설정
-  app.connectMicroservice<MicroserviceOptions>({
-    transport: Transport.KAFKA,
-    options: {
-      client: {
-        brokers: [kafkaBroker],
-        clientId: kafkaClientId,
-      },
-      consumer: {
-        groupId: kafkaGroupId,
-        allowAutoTopicCreation: true,
-      },
-    },
-  });
 
   // Swagger 설정
   const config = new DocumentBuilder()

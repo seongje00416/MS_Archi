@@ -5,12 +5,14 @@ import { RedisModule } from './redis/redis.module';
 import { ConfigModule } from '@nestjs/config';
 import { OrdersModule } from './order/order.module';
 import { RabbitmqModule } from './rabbitmq/rabbitmq.module';
+import { KafkaModule } from './kafka/kafka.module';
 
 @Module({
   imports: [
     OrdersModule,
     RedisModule,
     RabbitmqModule,
+    KafkaModule,
     ConfigModule.forRoot({ isGlobal: true }),
   ],
   controllers: [AppController],

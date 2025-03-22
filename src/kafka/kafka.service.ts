@@ -12,7 +12,18 @@ export class KafkaService {
     return order;
   }
 
-  getAllMessages(): Order[] {
-    return this.orders;
+  getOrder(orderId: string): Promise<Order | null> {
+    this.logger.log(`Searching for order with ID: ${orderId}`);
+
+    // orders 배열에서 orderId와 일치하는 주문을 찾습니다
+    const order = this.orders.find((order) => order.orderId === orderId);
+
+    if (order) {
+      this.logger.log(`Found order: ${JSON.stringify(order)}`);
+      return Promise.resolve(order);
+    } else {
+      this.logger.log(`Order with ID ${orderId} not found`);
+      return Promise.resolve(null);
+    }
   }
 }
