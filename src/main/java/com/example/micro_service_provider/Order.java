@@ -21,6 +21,7 @@ public class Order implements Serializable {
     private String status;
     private List<OrderItem> items;
     private LocalDateTime orderDate;
+    private LocalDateTime receiveDate;
 
     @Data
     @NoArgsConstructor

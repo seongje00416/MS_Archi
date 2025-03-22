@@ -1,5 +1,7 @@
-package com.example.micro_service_provider;
+package com.example.micro_service_provider.redis;
 
+import com.example.micro_service_provider.Order;
+import com.example.micro_service_provider.OrderEvent;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.redis.core.RedisTemplate;
