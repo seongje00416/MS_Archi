@@ -14,6 +14,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
@@ -31,6 +32,12 @@ public class OrderController {
     // To use Kafka
     private final KafkaProducer kafkaProducer;
 
+    private String getNowTime() {
+        LocalDateTime now = LocalDateTime.now();
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss.SSS");
+        return now.format(formatter);
+    }
+
     @Operation( summary = "Redis 테스트 API", description = "주문 생성 -> Redis로 전송" )
     @ApiResponses( value = {
             @ApiResponse(
@@ -43,7 +50,7 @@ public class OrderController {
         try {
             String orderId = UUID.randomUUID().toString();
             order.setOrderId(orderId);
-            order.setOrderDate(LocalDateTime.now());
+            order.setOrderDate(getNowTime());
             order.setStatus("CREATED");
 
             // To use Redis
@@ -83,7 +90,7 @@ public class OrderController {
         try {
             String orderId = UUID.randomUUID().toString();
             order.setOrderId(orderId);
-            order.setOrderDate(LocalDateTime.now());
+            order.setOrderDate(getNowTime());
             order.setStatus("CREATED");
 
             // To use RabbitMQ
@@ -119,7 +126,7 @@ public class OrderController {
         try {
             String orderId = UUID.randomUUID().toString();
             order.setOrderId(orderId);
-            order.setOrderDate(LocalDateTime.now());
+            order.setOrderDate(getNowTime());
             order.setStatus("CREATED");
 
             // To use Kafka

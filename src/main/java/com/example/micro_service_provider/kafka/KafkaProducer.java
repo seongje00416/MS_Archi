@@ -2,7 +2,6 @@ package com.example.micro_service_provider.kafka;
 
 import com.example.micro_service_provider.Order;
 import com.example.micro_service_provider.OrderEvent;
-import com.example.micro_service_provider.rabbitmq.MessageProducer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -16,7 +15,7 @@ import java.util.concurrent.CompletableFuture;
 
 @Service
 public class KafkaProducer {
-    private static final Logger logger = LoggerFactory.getLogger(MessageProducer.class);
+    private static final Logger logger = LoggerFactory.getLogger(KafkaProducer.class);
 
     @Value("${kafka.topic.name}")
     private String topicName;

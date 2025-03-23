@@ -10,7 +10,7 @@ import org.springframework.context.annotation.Configuration;
 
 @Configuration
 public class RabbitMQConfig {
-    public static final String QUEUE_NAME = "messages_queue";
+    public static final String QUEUE_NAME = "order_queue";
     public static final String EXCHANGE_NAME = "messages_exchange";
     public static final String ROUTING_KEY = "messages_routing_key";
 
