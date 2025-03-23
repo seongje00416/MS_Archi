@@ -8,13 +8,33 @@ import { KafkaService } from '../kafka/kafka.service';
 export class OrdersService {
   private readonly logger = new Logger(OrdersService.name);
 
-  //constructor(private readonly brokerService: RabbitmqService) {}
-  //constructor(private readonly brokerService: KafkaService) {}
-  constructor(private readonly brokerService: RedisService) {}
+  constructor(
+    private readonly rabbitService: RabbitmqService,
+    private readonly kafkaService: KafkaService,
+    private readonly redisService: RedisService,
+  ) {}
 
-  async getOrder(orderId: string): Promise<Order | null> {
+  async getOrderRedis(orderId: string): Promise<Order | null> {
     try {
-      return await this.brokerService.getOrder(orderId);
+      return await this.redisService.getOrder(orderId);
+    } catch (error) {
+      this.logger.error(`Error getting order: ${error.message}`, error.stack);
+      throw error;
+    }
+  }
+
+  async getOrderRabbitMQ(orderId: string): Promise<Order | null> {
+    try {
+      return await this.rabbitService.getOrder(orderId);
+    } catch (error) {
+      this.logger.error(`Error getting order: ${error.message}`, error.stack);
+      throw error;
+    }
+  }
+
+  async getOrderKafka(orderId: string): Promise<Order | null> {
+    try {
+      return await this.kafkaService.getOrder(orderId);
     } catch (error) {
       this.logger.error(`Error getting order: ${error.message}`, error.stack);
       throw error;
@@ -32,7 +52,7 @@ export class OrdersService {
       order.status = 'PROCESSING';
 
       // 업데이트된 주문 정보를 Redis에 저장
-      await this.brokerService.setOrder(order);
+      await this.redisService.setOrder(order);
 
       this.logger.log(`Order ${order.orderId} processed successfully`);
     } catch (error) {
