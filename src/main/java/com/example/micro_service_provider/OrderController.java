@@ -31,15 +31,15 @@ public class OrderController {
     // To use Kafka
     private final KafkaProducer kafkaProducer;
 
-    @Operation( summary = "주문 생성 API", description = "주문 생성하는 API" )
+    @Operation( summary = "Redis 테스트 API", description = "주문 생성 -> Redis로 전송" )
     @ApiResponses( value = {
             @ApiResponse(
                     responseCode = "200",
                     description = "생성 성공"
             )
     })
-    @PostMapping
-    public ResponseEntity<Map<String, Object>> createOrder(@RequestBody Order order) {
+    @PostMapping("/order/redis")
+    public ResponseEntity<Map<String, Object>> createOrderRedis(@RequestBody Order order) {
         try {
             String orderId = UUID.randomUUID().toString();
             order.setOrderId(orderId);
@@ -54,8 +54,73 @@ public class OrderController {
             // 주문 큐에 추가
             redisService.addToOrderQueue(orderId);
 
+            // 응답 생성
+            Map<String, Object> response = new HashMap<>();
+            response.put("success", true);
+            response.put("message", "[Redis] 주문이 성공적으로 생성되었습니다");
+            response.put("orderId", orderId);
+            return ResponseEntity.status(HttpStatus.CREATED).body(response);
+        } catch (Exception e) {
+            log.error("주문 생성 중 오류 발생", e);
+
+            Map<String, Object> response = new HashMap<>();
+            response.put("success", false);
+            response.put("message", "주문 처리 중 오류가 발생했습니다: " + e.getMessage());
+
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
+        }
+    }
+
+    @Operation( summary = "RabbitMQ 테스트 API", description = "주문 생성 -> RabbitMQ로 전송" )
+    @ApiResponses( value = {
+            @ApiResponse(
+                    responseCode = "200",
+                    description = "생성 성공"
+            )
+    })
+    @PostMapping("/order/rabbitmq")
+    public ResponseEntity<Map<String, Object>> createOrderRabbitMQ(@RequestBody Order order) {
+        try {
+            String orderId = UUID.randomUUID().toString();
+            order.setOrderId(orderId);
+            order.setOrderDate(LocalDateTime.now());
+            order.setStatus("CREATED");
+
             // To use RabbitMQ
             messageProducer.sendOrder( order, "RABBITMQ_ORDER_CREATED");
+
+
+            // 응답 생성
+            Map<String, Object> response = new HashMap<>();
+            response.put("success", true);
+            response.put("message", "[RabbitMQ] 주문이 성공적으로 생성되었습니다");
+            response.put("orderId", orderId);
+            return ResponseEntity.status(HttpStatus.CREATED).body(response);
+        } catch (Exception e) {
+            log.error("주문 생성 중 오류 발생", e);
+
+            Map<String, Object> response = new HashMap<>();
+            response.put("success", false);
+            response.put("message", "주문 처리 중 오류가 발생했습니다: " + e.getMessage());
+
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
+        }
+    }
+
+    @Operation( summary = "Kafka 테스트 API", description = "주문 생성 -> Kafka로 전송" )
+    @ApiResponses( value = {
+            @ApiResponse(
+                    responseCode = "200",
+                    description = "생성 성공"
+            )
+    })
+    @PostMapping("/order/kafka")
+    public ResponseEntity<Map<String, Object>> createOrderKafka(@RequestBody Order order) {
+        try {
+            String orderId = UUID.randomUUID().toString();
+            order.setOrderId(orderId);
+            order.setOrderDate(LocalDateTime.now());
+            order.setStatus("CREATED");
 
             // To use Kafka
             kafkaProducer.sendMessage( order, "KAFKA_ORDER_CREATED" );
@@ -63,7 +128,7 @@ public class OrderController {
             // 응답 생성
             Map<String, Object> response = new HashMap<>();
             response.put("success", true);
-            response.put("message", "주문이 성공적으로 생성되었습니다");
+            response.put("message", "[Kafka] 주문이 성공적으로 생성되었습니다");
             response.put("orderId", orderId);
             return ResponseEntity.status(HttpStatus.CREATED).body(response);
         } catch (Exception e) {
