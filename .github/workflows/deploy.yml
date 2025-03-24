@@ -61,8 +61,7 @@ jobs:
 
       - name: Build Docker image on Lightsail with improved timeout
         run: |
-          ssh ${{ secrets.SSH_USER }}@${{ secrets.HOST_IP }} "cd ~/current_app && sudo docker build -t your-app:${{ github.sha }} ."
-
+          ssh -o ServerAliveInterval=60 ${{ secrets.SSH_USER }}@${{ secrets.HOST_IP }} "cd ~/current_app && sudo docker build --build-arg JAR_FILE=*.jar -t your-app:${{ github.sha }} ."
 
       - name: Update kubernetes deployment file
         run: |
