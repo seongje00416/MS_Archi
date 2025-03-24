@@ -20,7 +20,8 @@ public class Order implements Serializable {
     private BigDecimal totalAmount;
     private String status;
     private List<OrderItem> items;
-    private LocalDateTime orderDate;
+    private String orderDate;
+    private String receiveDate;
 
     @Data
     @NoArgsConstructor
