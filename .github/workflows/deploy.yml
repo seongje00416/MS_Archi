@@ -44,6 +44,7 @@ jobs:
         run: |
           ssh ${{ secrets.SSH_USER }}@${{ secrets.HOST_IP }} "cd ~/current_app && sudo docker build -t your-app:${{ github.sha }} ."
 
+
       - name: Update kubernetes deployment file
         run: |
           ssh ${{ secrets.SSH_USER }}@${{ secrets.HOST_IP }} "cd ~/current_app && sed -i \"s|image:.*|image: your-app:${{ github.sha }}|g\" kubernetes/deployment.yaml"
