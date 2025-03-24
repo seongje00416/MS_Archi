@@ -27,7 +27,7 @@ jobs:
 
       - name: Create deployment directory on Lightsail
         run: |
-          ssh ${{ secrets.SSH_USER }}@${{ secrets.LIGHTSAIL_IP }} "mkdir -p ~/app_${{ github.sha }} && rm -rf ~/current_app && ln -s ~/app_${{ github.sha }} ~/current_app"
+          ssh ${{ secrets.SSH_USER }}@${{ secrets.HOST_IP }} "mkdir -p ~/app_${{ github.sha }} && rm -rf ~/current_app && ln -s ~/app_${{ github.sha }} ~/current_app"
 
       - name: Transfer code to Lightsail
         run: |
@@ -35,28 +35,28 @@ jobs:
           tar -czf /tmp/app_code.tar.gz --exclude='.git' --exclude='node_modules' .
           
           # 압축 파일 전송
-          scp /tmp/app_code.tar.gz ${{ secrets.SSH_USER }}@${{ secrets.LIGHTSAIL_IP }}:/tmp/app_code.tar.gz
+          scp /tmp/app_code.tar.gz ${{ secrets.SSH_USER }}@${{ secrets.HOST_IP }}:/tmp/app_code.tar.gz
           
           # 원격 서버에서 압축 해제
-          ssh ${{ secrets.SSH_USER }}@${{ secrets.LIGHTSAIL_IP }} "tar -xzf /tmp/app_code.tar.gz -C ~/app_${{ github.sha }} && rm /tmp/app_code.tar.gz"
+          ssh ${{ secrets.SSH_USER }}@${{ secrets.HOST_IP }} "tar -xzf /tmp/app_code.tar.gz -C ~/app_${{ github.sha }} && rm /tmp/app_code.tar.gz"
 
       - name: Build Docker image on Lightsail
         run: |
-          ssh ${{ secrets.SSH_USER }}@${{ secrets.LIGHTSAIL_IP }} "cd ~/current_app && docker build -t your-app:${{ github.sha }} ."
+          ssh ${{ secrets.SSH_USER }}@${{ secrets.HOST_IP }} "cd ~/current_app && docker build -t your-app:${{ github.sha }} ."
 
       - name: Update kubernetes deployment file
         run: |
-          ssh ${{ secrets.SSH_USER }}@${{ secrets.LIGHTSAIL_IP }} "cd ~/current_app && sed -i \"s|image:.*|image: your-app:${{ github.sha }}|g\" kubernetes/deployment.yaml"
+          ssh ${{ secrets.SSH_USER }}@${{ secrets.HOST_IP }} "cd ~/current_app && sed -i \"s|image:.*|image: your-app:${{ github.sha }}|g\" kubernetes/deployment.yaml"
 
       - name: Deploy to Kubernetes
         run: |
-          ssh ${{ secrets.SSH_USER }}@${{ secrets.LIGHTSAIL_IP }} "cd ~/current_app && kubectl apply -f kubernetes/deployment.yaml && kubectl rollout status deployment/your-deployment-name"
+          ssh ${{ secrets.SSH_USER }}@${{ secrets.HOST_IP }} "cd ~/current_app && kubectl apply -f kubernetes/deployment.yaml && kubectl rollout status deployment/your-deployment-name"
 
       - name: Verify deployment
         run: |
-          ssh ${{ secrets.SSH_USER }}@${{ secrets.LIGHTSAIL_IP }} "kubectl get pods -l app=your-app-label"
+          ssh ${{ secrets.SSH_USER }}@${{ secrets.HOST_IP }} "kubectl get pods -l app=your-app-label"
 
       - name: Cleanup old deployments
         if: success()
         run: |
-          ssh ${{ secrets.SSH_USER }}@${{ secrets.LIGHTSAIL_IP }} "ls -1d ~/app_* | grep -v app_${{ github.sha }} | head -n -3 | xargs -r rm -rf"
+          ssh ${{ secrets.SSH_USER }}@${{ secrets.HOST_IP }} "ls -1d ~/app_* | grep -v app_${{ github.sha }} | head -n -3 | xargs -r rm -rf"
