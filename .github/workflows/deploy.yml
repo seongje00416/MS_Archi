@@ -15,6 +15,21 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v3
 
+      # Gradle 캐시 추가
+      - name: Set up Gradle cache
+        uses: actions/cache@v3
+        with:
+          path: |
+            ~/.gradle/caches
+            ~/.gradle/wrapper
+          key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties') }}
+          restore-keys: |
+            ${{ runner.os }}-gradle-
+
+      # 로컬에서 Jar 먼저 빌드
+      - name: Build with Gradle
+        run: ./gradlew build -x test
+
       - name: Set up SSH key
         uses: webfactory/ssh-agent@v0.8.0
         with:
@@ -27,38 +42,36 @@ jobs:
 
       - name: Create deployment directory on Lightsail
         run: |
-          ssh ${{ secrets.SSH_USER }}@${{ secrets.HOST_IP }} "mkdir -p ~/app_${{ github.sha }} && rm -rf ~/current_app && ln -s ~/app_${{ github.sha }} ~/current_app"
+          ssh -o ServerAliveInterval=60 ${{ secrets.SSH_USER }}@${{ secrets.HOST_IP }} "mkdir -p ~/app_${{ github.sha }} && rm -rf ~/current_app && ln -s ~/app_${{ github.sha }} ~/current_app"
 
-      - name: Transfer code to Lightsail
+      - name: Transfer only necessary files to Lightsail
         run: |
-          # 코드 압축
-          tar -czf /tmp/app_code.tar.gz --exclude='.git' --exclude='node_modules' .
+          # 필요한 파일만 압축 (jar, Dockerfile, kubernetes)
+          mkdir -p deploy
+          cp build/libs/*.jar deploy/
+          cp Dockerfile deploy/
+          cp -r kubernetes deploy/
           
           # 압축 파일 전송
-          scp /tmp/app_code.tar.gz ${{ secrets.SSH_USER }}@${{ secrets.HOST_IP }}:/tmp/app_code.tar.gz
+          tar -czf /tmp/deploy.tar.gz -C deploy .
+          scp -o ServerAliveInterval=60 /tmp/deploy.tar.gz ${{ secrets.SSH_USER }}@${{ secrets.HOST_IP }}:/tmp/deploy.tar.gz
           
           # 원격 서버에서 압축 해제
-          ssh ${{ secrets.SSH_USER }}@${{ secrets.HOST_IP }} "tar -xzf /tmp/app_code.tar.gz -C ~/app_${{ github.sha }} && rm /tmp/app_code.tar.gz"
+          ssh -o ServerAliveInterval=60 ${{ secrets.SSH_USER }}@${{ secrets.HOST_IP }} "tar -xzf /tmp/deploy.tar.gz -C ~/app_${{ github.sha }} && rm /tmp/deploy.tar.gz"
 
-      - name: Build Docker image on Lightsail
+      - name: Build Docker image on Lightsail with improved timeout
         run: |
-          ssh ${{ secrets.SSH_USER }}@${{ secrets.HOST_IP }} "cd ~/current_app && sudo docker build -t your-app:${{ github.sha }} ."
+          ssh -o ServerAliveInterval=60 ${{ secrets.SSH_USER }}@${{ secrets.HOST_IP }} "cd ~/current_app && sudo docker build --build-arg JAR_FILE=*.jar -t your-app:${{ github.sha }} ."
 
       - name: Update kubernetes deployment file
         run: |
-          ssh ${{ secrets.SSH_USER }}@${{ secrets.HOST_IP }} "cd ~/current_app && sed -i \"s|image:.*|image: your-app:${{ github.sha }}|g\" kubernetes/deployment.yaml"
+          ssh -o ServerAliveInterval=60 ${{ secrets.SSH_USER }}@${{ secrets.HOST_IP }} "cd ~/current_app && sed -i \"s|image:.*|image: your-app:${{ github.sha }}|g\" kubernetes/deployment.yaml"
 
       - name: Deploy to Kubernetes
         run: |
-          ssh ${{ secrets.SSH_USER }}@${{ secrets.HOST_IP }} "cd ~/current_app && kubectl apply -f kubernetes/deployment.yaml && kubectl rollout status deployment/your-deployment-name"
-
-      - name: Verify deployment
-        run: |
-          ssh ${{ secrets.SSH_USER }}@${{ secrets.HOST_IP }} "kubectl get pods -l app=your-app-label"
-
+          ssh -o ServerAliveInterval=60 ${{ secrets.SSH_USER }}@${{ secrets.HOST_IP }} "cd ~/current_app && kubectl apply -f kubernetes/deployment.yaml && kubectl rollout status deployment/your-deployment-name"
 
       - name: Cleanup old deployments
         if: success()
         run: |
-          ssh ${{ secrets.SSH_USER }}@${{ secrets.HOST_IP }} "ls -1d ~/app_* | grep -v app_${{ github.sha }} | head -n -3 | xargs -r rm -rf"
-
+          ssh -o ServerAliveInterval=60 ${{ secrets.SSH_USER }}@${{ secrets.HOST_IP }} "ls -1d ~/app_* | grep -v app_${{ github.sha }} | head -n -3 | xargs -r rm -rf"
