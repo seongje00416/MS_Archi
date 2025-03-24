@@ -56,7 +56,9 @@ jobs:
         run: |
           ssh ${{ secrets.SSH_USER }}@${{ secrets.HOST_IP }} "kubectl get pods -l app=your-app-label"
 
+
       - name: Cleanup old deployments
         if: success()
         run: |
           ssh ${{ secrets.SSH_USER }}@${{ secrets.HOST_IP }} "ls -1d ~/app_* | grep -v app_${{ github.sha }} | head -n -3 | xargs -r rm -rf"
+
