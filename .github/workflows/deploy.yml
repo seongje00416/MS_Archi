@@ -49,18 +49,14 @@ jobs:
 
       - name: Transfer only necessary files to Lightsail
         run: |
-          # 필요한 파일만 압축 (jar, Dockerfile, kubernetes)
-          mkdir -p deploy
-          cp build/libs/*.jar deploy/
-          cp Dockerfile deploy/
-          cp -r kubernetes deploy/
+          # 전체 프로젝트 복사 (src 디렉토리 포함)
+          tar -czf /tmp/app_code.tar.gz --exclude='.git' --exclude='node_modules' --exclude='build' .
           
           # 압축 파일 전송
-          tar -czf /tmp/deploy.tar.gz -C deploy .
-          scp -o ServerAliveInterval=60 /tmp/deploy.tar.gz ${{ secrets.SSH_USER }}@${{ secrets.HOST_IP }}:/tmp/deploy.tar.gz
+          scp -o ServerAliveInterval=60 /tmp/app_code.tar.gz ${{ secrets.SSH_USER }}@${{ secrets.HOST_IP }}:/tmp/app_code.tar.gz
           
           # 원격 서버에서 압축 해제
-          ssh -o ServerAliveInterval=60 ${{ secrets.SSH_USER }}@${{ secrets.HOST_IP }} "tar -xzf /tmp/deploy.tar.gz -C ~/app_${{ github.sha }} && rm /tmp/deploy.tar.gz"
+          ssh -o ServerAliveInterval=60 ${{ secrets.SSH_USER }}@${{ secrets.HOST_IP }} "tar -xzf /tmp/app_code.tar.gz -C ~/app_${{ github.sha }} && rm /tmp/app_code.tar.gz"
 
       - name: Build Docker image on Lightsail with improved timeout
         run: |
