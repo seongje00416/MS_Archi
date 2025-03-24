@@ -63,6 +63,7 @@ jobs:
         run: |
           ssh -o ServerAliveInterval=60 ${{ secrets.SSH_USER }}@${{ secrets.HOST_IP }} "cd ~/current_app && sudo docker build --build-arg JAR_FILE=*.jar -t your-app:${{ github.sha }} ."
 
+
       - name: Update kubernetes deployment file
         run: |
           ssh -o ServerAliveInterval=60 ${{ secrets.SSH_USER }}@${{ secrets.HOST_IP }} "cd ~/current_app && sed -i \"s|image:.*|image: your-app:${{ github.sha }}|g\" kubernetes/deployment.yaml"
